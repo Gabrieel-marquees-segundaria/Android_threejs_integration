@@ -1,66 +1,100 @@
+// Plugins necessários para o projeto
 plugins {
-    id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
-    id "com.github.node-gradle.node" version "3.5.0"
+    id 'com.android.application'                    // Plugin principal para aplicações Android
+    id 'org.jetbrains.kotlin.android'              // Suporte ao Kotlin (mesmo usando Java)
+    id "com.github.node-gradle.node" version "3.5.0" // Plugin para integrar Node.js/npm no build
 }
 
+// Configuração do Node.js para compilar assets JavaScript/Three.js
 node {
+    // Define onde estão os arquivos Node.js (package.json, node_modules, etc.)
     nodeProjectDir = file("${project.projectDir}/src/main/${NODE_SRC_DIR}")
 }
 
 android {
-    namespace 'com.example.android_three_js'
-    compileSdk 35
+    namespace 'com.example.android_three_js'        // Namespace único do app
+    compileSdk 35                                   // SDK de compilação (Android 15)
 
     defaultConfig {
-        applicationId "com.example.android_three_js"
-        minSdk 29
-        targetSdk 35
-        versionCode 1
-        versionName "1.0"
+        applicationId "com.example.android_three_js" // ID único na Play Store
+        minSdk 29                                   // Mínimo Android 10 (API 29)
+        targetSdk 35                                // Target Android 15 (API 35)
+        versionCode 1                               // Código numérico da versão (para updates)
+        versionName "1.0"                          // Nome da versão (visível ao usuário)
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
-        preBuild.dependsOn npm_install
-        preBuild.dependsOn npm_run_build
+        // Executa comandos npm ANTES de compilar o Android
+        preBuild.dependsOn npm_install              // Instala dependências Node.js (Three.js, etc.)
+        preBuild.dependsOn npm_run_build           // Compila/bundle o código JavaScript
+        // sobre escreve os arquivos com os arquivos da pasta de node_assets
 
+        // Configurações do empacotador de assets
         aaptOptions {
+            // Ignora a pasta do código fonte Node.js no APK final
             ignoreAssetsPattern '$NODEJS_SRC_DIR'
         }
     }
 
+    // Configurações de build para diferentes tipos
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled false                     // Não minifica código (desabilitado para debug)
+            // Arquivos de configuração ProGuard para ofuscação/otimização
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
+    // Configurações de compatibilidade Java
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_1_8  // Código fonte compatível com Java 8
+        targetCompatibility JavaVersion.VERSION_1_8  // Bytecode target Java 8
     }
+
+    // Configurações específicas do Kotlin
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '1.8'                          // Target JVM para Kotlin
     }
+
+    // Recursos de build habilitados
     buildFeatures {
-        viewBinding true
+        viewBinding true                           // Habilita View Binding para acesso aos views
     }
 }
 
+// Dependências do projeto
 dependencies {
+    // Bibliotecas principais do Android
+    implementation 'androidx.core:core-ktx:1.16.0'           // Extensões Kotlin para Android
+    implementation 'androidx.appcompat:appcompat:1.7.1'      // Compatibilidade com versões antigas
+    implementation 'com.google.android.material:material:1.12.0' // Material Design components
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.1' // Layout constraints
 
-    implementation 'androidx.core:core-ktx:1.16.0'
-    implementation 'androidx.appcompat:appcompat:1.7.1'
-    implementation 'com.google.android.material:material:1.12.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
-    implementation 'androidx.webkit:webkit:1.14.0'
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
+    // Biblioteca essencial para WebView moderna e segura
+    implementation 'androidx.webkit:webkit:1.14.0'           // WebView com recursos avançados
+
+    // Dependências de teste
+    testImplementation 'junit:junit:4.13.2'                  // Testes unitários
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1' // Testes instrumentados
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1' // Testes de UI
 }
 
+// Configuração da toolchain Java
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(17)         // Usa Java 17 para compilação
     }
 }
+
+/*
+RESUMO DO FLUXO DE BUILD:
+1. npm_install - Instala Three.js e outras dependências JS
+2. npm_run_build - Compila/empacota o código JavaScript 
+3. Android build - Compila o app Android incluindo os assets JS compilados
+4. APK final contém tanto o código Android quanto o bundle JavaScript otimizado
+
+Este setup permite desenvolver uma aplicação híbrida onde:
+- O código 3D fica em JavaScript/Three.js (fácil desenvolvimento)
+- O container Android fornece performance nativa e acesso ao sistema
+- WebView faz a ponte entre os dois mundos
+*/
